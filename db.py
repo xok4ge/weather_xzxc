@@ -1,14 +1,28 @@
 import psycopg2
-with open('24.txt', mode='r', encoding='utf-8') as file:
-    q = file.read().strip()
-    maxis = []
-    m = 0
-    wc = 0
-    for a in range(len(q)-1):
-        if q[a]+q[a+1] == 'WW':
-            wc += 1
-        if wc == 101:
-            maxis.append(m)
-            m, wc = 2, 0
-        m += 1
-print(max(maxis))
+from config import dbname, user, password
+
+
+def db_session():
+    try:
+        connection = psycopg2.connect(user=user, password=password, database=dbname)
+        connection.autocommit = True
+        print('\033[96m[INFO] connection is established\033[0m')
+        return connection
+        # with conn.cursor() as cur:
+        #     cur.execute(f"""select * from users""")
+        #     return cur.fetchall()
+
+    except Exception as e:
+        return '[INFO] connection lost'
+
+
+def add_user(username, passw, conn):
+    with conn.cursor() as cur:
+        cur.execute(f"""select username from users
+                            where username=%s and password=crypt(%s, password)""", (username, passw))
+        result = cur.fetchone()
+        if result:
+            return result[0]
+        cur.execute(f"""insert into users(username, password)
+                            values(%s, crypt(%s, gen_salt('bf')))""", (username, passw))
+        return None
