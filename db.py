@@ -16,13 +16,24 @@ def db_session():
         return '[INFO] connection lost'
 
 
-def add_user(username, passw, conn):
+def add_db_user(username, passw, conn):
     with conn.cursor() as cur:
         cur.execute(f"""select username from users
-                            where username=%s and password=crypt(%s, password)""", (username, passw))
+                            where username=%s""", (username,))
         result = cur.fetchone()
         if result:
             return result[0]
         cur.execute(f"""insert into users(username, password)
                             values(%s, crypt(%s, gen_salt('bf')))""", (username, passw))
         return None
+
+
+def login_db_user(username, passw, conn):
+    with conn.cursor() as cur:
+        cur.execute(f"""select username from users
+                            where username=%s and password=crypt(%s, password)""", (username, passw))
+        result = cur.fetchone()
+        print(username)
+        if result:
+            return True, result[0]
+        return False, username
