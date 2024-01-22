@@ -37,3 +37,12 @@ def login_db_user(username, passw, conn):
         if result:
             return True, result[0]
         return False, username
+
+
+def get_station_db(sin_indx, conn):
+    with conn.cursor() as cur:
+        cur.execute(f"""select name, country, synoptic_index from stations
+                            where synoptic_index=%s""", (sin_indx,))
+        ans = cur.fetchone()
+        if ans is not None:
+            return list(ans)

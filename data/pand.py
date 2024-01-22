@@ -36,4 +36,3 @@ for f in files:
                 st += el + 1
             writer.writerow(new)
     print(timer() - start)
-
