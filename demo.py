@@ -10,20 +10,24 @@
 # dpg.show_viewport()
 # dpg.start_dearpygui()
 # dpg.destroy_context()
+
 import dearpygui.dearpygui as dpg
 
 dpg.create_context()
 
-with dpg.window(label="Delete Files", modal=True, show=False, tag="modal_id", no_title_bar=True):
-    dpg.add_text("All those beautiful files will be deleted.\nThis operation cannot be undone!")
-    dpg.add_separator()
-    dpg.add_checkbox(label="Don't ask me next time")
-    with dpg.group(horizontal=True):
-        dpg.add_button(label="OK", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
-        dpg.add_button(label="Cancel", width=75, callback=lambda: dpg.configure_item("modal_id", show=False))
+def callback(sender, app_data, user_data):
+    print("Sender: ", sender)
+    print("App Data: ", app_data)
 
-with dpg.window(label="Tutorial"):
-    dpg.add_button(label="Open Dialog", callback=lambda: dpg.configure_item("modal_id", show=True))
+with dpg.file_dialog(directory_selector=False, show=False, callback=callback, id="file_dialog_id", width=700 ,height=400):
+    dpg.add_file_extension(".*")
+    dpg.add_file_extension("", color=(150, 255, 150, 255))
+    dpg.add_file_extension("Source files (*.cpp *.h *.hpp){.cpp,.h,.hpp}", color=(0, 255, 255, 255))
+    dpg.add_file_extension(".h", color=(255, 0, 255, 255), custom_text="[header]")
+    dpg.add_file_extension(".py", color=(0, 255, 0, 255), custom_text="[Python]")
+
+with dpg.window(label="Tutorial", width=800, height=300):
+    dpg.add_button(label="File Selector", callback=lambda: dpg.show_item("file_dialog_id"))
 
 dpg.create_viewport(title='Custom Title', width=800, height=600)
 dpg.setup_dearpygui()

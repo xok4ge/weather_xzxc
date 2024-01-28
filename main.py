@@ -1,11 +1,14 @@
 import dearpygui.dearpygui as dpg
 import ctypes
+from api import *
+from receive import *
 from datetime import datetime
 from get_data import *
 from pathlib import Path as pth
 from date_picker import DatePicker
 from db import *
 from config import *
+from file_import import *
 
 
 conn = db_session()
@@ -13,6 +16,94 @@ user32 = ctypes.windll.user32
 screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 view_pos = [screensize[0] // 2 - 70, screensize[1] // 2 - 270]
 dpg.create_context()
+
+
+
+def upload_file(sender, app_data):
+    upload_file_fi(app_data['file_path_name'], app_data['file_name'].split('.'))
+    stations = [', '.join(list(map(str, i))) for i in get_stations()]
+    print(stations)
+    dpg.configure_item(combo_station, items=stations)
+    print(dpg.get_value(combo_station))
+
+
+def monitor_place(sender, app_data):
+    plc = dpg.get_value('mtr_cnf')
+    data = get_place(plc)
+    cldate, fjson, curjson = read_json(data)
+    monitor_clear()
+    period = [int(i['hour'])  for i in fjson]
+    temp, wind_s, pressure, prec, hum, wind_m = [[float(i['temp']) for i in fjson], [float(i['wind_speed']) for i in fjson],
+                                                 [float(i['pressure_mm']) for i in fjson], [float(i['prec_mm']) for i in fjson],
+                                                 [float(i['humidity']) for i in fjson], max([float(i['wind_gust']) for i in fjson])]
+
+    dpg.set_value('mnt_date', dpg.get_value('mnt_date') + cldate)
+    dpg.set_value('mnt_avtemp', dpg.get_value('mnt_avtemp') + str(round(sum(temp)/len(fjson), 1)) + ' °C')
+    dpg.set_value('mnt_avwind', dpg.get_value('mnt_avwind') + str(round(sum(wind_s)/len(fjson), 1)) + ' m/s')
+    dpg.set_value('mnt_avpr', dpg.get_value('mnt_avpr') + str(round(sum(pressure)/len(fjson), 1)) + ' mmHg')
+    dpg.set_value('mnt_rfal', dpg.get_value('mnt_rfal') + str(round(sum(prec), 1)) + ' mm')
+    dpg.set_value('mnt_hum', dpg.get_value('mnt_hum') + str(round(sum(hum)/len(fjson), 1)) + ' %')
+    dpg.set_value('mnt_mint', dpg.get_value('mnt_mint') + str(min([float(i['temp']) for i in fjson])) + ' °C')
+    dpg.set_value('mnt_maxt', dpg.get_value('mnt_maxt') + str(max([float(i['temp']) for i in fjson])) + ' °C')
+    dpg.set_value('mnt_maxw', dpg.get_value('mnt_maxw') + str(wind_m) + ' m/s')
+    dpg.set_value('mntc_temp', dpg.get_value('mntc_temp') + str(curjson['temp']) + ' °C')
+    dpg.set_value('mntc_wind', dpg.get_value('mntc_wind') + str(curjson['wind_speed']) + ' m/s')
+    dpg.set_value('mntc_hum', dpg.get_value('mntc_hum') + str(curjson['humidity']) + ' %')
+    dpg.set_value('mntc_pr', dpg.get_value('mntc_pr') + str(curjson['pressure_mm']) + ' mmHg')
+    dpg.set_value('mntc_cnd', dpg.get_value('mntc_cnd') + str(curjson['condition']))
+
+    mn_axis_fit()
+
+    dpg.set_value('lsmn_temp', [period, temp])
+    dpg.set_value('sctmn_temp', [period, temp])
+
+    dpg.set_value('lsmn_rfal', [period, prec])
+    dpg.set_value('sctmn_rfal', [period, prec])
+
+    dpg.set_value('lsmn_hum', [period, hum])
+    dpg.set_value('sctmn_hum', [period, hum])
+
+    dpg.set_value('lsmn_pres', [period, pressure])
+    dpg.set_value('sctmn_pres', [period, pressure])
+
+    dpg.set_value('bmn_wind', [period, wind_s])
+    dpg.set_value('bmn_windmx', [period, [wind_m]*len(fjson)])
+
+    dpg.set_value('drag_temp', curjson['temp'])
+    dpg.configure_item('drag_temp', show=True)
+
+def save_file_an(sender, app_data):
+    an_flnms = ['an_ind', 'an_date', 'an_avtemp', 'an_avwind', 'an_avpr', 'an_rfal', 'an_hum', 'an_cc', 'an_mint',
+          'an_maxt', 'an_maxw']
+    with open(app_data['file_path_name'], mode='w', encoding='utf-8') as file:
+        for el in an_flnms:
+            file.write(dpg.get_value(el)+'\n')
+
+def mn_axis_fit():
+    dpg.set_axis_limits_auto('mn_xtemp')
+    dpg.fit_axis_data('mn_xtemp')
+    dpg.set_axis_limits_auto('mn_ytemp')
+    dpg.fit_axis_data('mn_ytemp')
+
+    dpg.set_axis_limits_auto('mn_xrfal')
+    dpg.fit_axis_data('mn_xrfal')
+    dpg.set_axis_limits_auto('mn_yrfal')
+    dpg.fit_axis_data('mn_yrfal')
+
+    dpg.set_axis_limits_auto('mn_xhum')
+    dpg.fit_axis_data('mn_xhum')
+    dpg.set_axis_limits_auto('mn_yhum')
+    dpg.fit_axis_data('mn_yhum')
+
+    dpg.set_axis_limits_auto('mn_xpres')
+    dpg.fit_axis_data('mn_xpres')
+    dpg.set_axis_limits_auto('mn_ypres')
+    dpg.fit_axis_data('mn_ypres')
+
+    dpg.set_axis_limits_auto('mn_xwind')
+    dpg.fit_axis_data('mn_xwind')
+    dpg.set_axis_limits_auto('mn_ywind')
+    dpg.fit_axis_data('mn_ywind')
 
 def graph_axis_fit():
     dpg.set_axis_limits_auto('x_axis_temp')
@@ -39,6 +130,29 @@ def graph_axis_fit():
     dpg.fit_axis_data('x_axis_prsr')
     dpg.set_axis_limits_auto('y_axis_prsr')
     dpg.fit_axis_data('y_axis_prsr')
+
+    dpg.set_axis_limits_auto('x_pie')
+    dpg.fit_axis_data('x_pie')
+    dpg.set_axis_limits_auto('y_pie')
+    dpg.fit_axis_data('y_pie')
+
+
+def monitor_clear():
+    dpg.set_value('mnt_date', value='Date: ')
+    dpg.set_value('mnt_avtemp', value='Average temperature: ')
+    dpg.set_value('mnt_avwind', value='Average wind velocity: ')
+    dpg.set_value('mnt_avpr', value='Average atm pressure: ')
+    dpg.set_value('mnt_rfal', value='Amount of rainfall: ')
+    dpg.set_value('mnt_hum', value='Average humidity value: ')
+    dpg.set_value('mnt_mint', value='Minimum temperature: ')
+    dpg.set_value('mnt_maxt', value='Maximum temperature: ')
+    dpg.set_value('mnt_maxw', value='Maximum wind velocity: ')
+    #####
+    dpg.set_value('mntc_temp', value='Current temperature: ')
+    dpg.set_value('mntc_wind', value='Current wind velocity: ')
+    dpg.set_value('mntc_hum', value='Current humidity: ')
+    dpg.set_value('mntc_pr', value='Current pressure: ')
+    dpg.set_value('mntc_cnd', value='Current condition: ')
 
 def analyze_clear():
     dpg.set_value('an_ind', value='Synoptic index: ')
@@ -69,7 +183,6 @@ def change_disp(sender, app_data):
         for el in graph_y:
             dpg.configure_item(el, show=True)
     graph_axis_fit()
-    print(app_data)
 
 def render_vis_chart(df, period, date):
     render_data = get_render(df, [date.year, date.month, date.day])
@@ -83,12 +196,32 @@ def render_vis_chart(df, period, date):
                                               list(map(float, render_data['Максимальная скорость ветра']))]
     # sup_params
     syn_ind = str(int(render_data.iloc[0]['Синоптический индекс станции']))
-    cl_cvr, cl_cvr_w = list(map(int, render_data['Общее количество облачности'])), ''
+    labels = {0: ['clear', 0],
+              1: ['light clouds', 0],
+              2: ['cloudy', 0],
+              3: ['snowstorm/sandstorm', 0],
+              4: ['fog', 0],
+              5: ['drizzle', 0],
+              6: ['rain', 0],
+              7: ['snow', 0],
+              8: ['rainfall', 0],
+              9: ['thunder', 0]}
+    weath = list(map(float, render_data['Погода между сроками']))
+    piev, piel = [], []
+    for el in weath:
+        try:
+            labels[int(el)][1]+=1
+        except ValueError:
+            continue
+    for x in labels.values():
+        if x[1]!=0:
+            piev += [x[1]]
+            piel += [x[0]]
+    cl_cvr, cl_cvr_w = list(map(float, render_data['Общее количество облачности'])), ''
     if len(list(filter(lambda x: 5 <= x <= 13, cl_cvr))) > len(list(filter(lambda x: 0 <= x < 5, cl_cvr))):
         cl_cvr_w = 'cloudy'
     else:
         cl_cvr_w = 'clear'
-    print(cl_cvr)
 
 
     dpg.set_value('line_series_temp', [period, temp])
@@ -125,10 +258,10 @@ def render_vis_chart(df, period, date):
     dpg.set_value('an_mint', dpg.get_value('an_mint') + str(min(temp)) + ' °C')
     dpg.set_value('an_maxt', dpg.get_value('an_maxt') + str(max(temp)) + ' °C')
     dpg.set_value('an_avwind', dpg.get_value('an_avwind') + str(sum(wind)/len(wind)) + ' m/s')
-    dpg.set_value('an_avpr', dpg.get_value('an_avpr') + str(round(sum(press)/len(press))) + ' mmHg')
-    dpg.set_value('an_hum', dpg.get_value('an_hum') + str(round(sum(moist)/len(moist))) + ' %')
+    dpg.set_value('an_avpr', dpg.get_value('an_avpr') + str(round(sum(press)/len(press), 1)) + ' mmHg')
+    dpg.set_value('an_hum', dpg.get_value('an_hum') + str(round(sum(moist)/len(moist), 1)) + ' %')
 
-
+    dpg.configure_item('an_pie', values=piev, labels=piel)
 
 def get_stations():
     stations = []
@@ -267,7 +400,13 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
         with dpg.menu_bar(tag='back_bar_work'):
             with dpg.group(pos=[0,0]):
                 with dpg.menu(label=' File'):  # not a mstk, space is needed
-                    pass
+                    with dpg.file_dialog(show=False, callback=upload_file, tag="upload_file_dia",
+                                        width=700, height=400):
+                        dpg.add_file_extension('*.csv *.xlsx{.csv,.xlsx}')
+                        dpg.add_file_extension('.csv', color=(121, 237, 158), custom_text='[CSV]')
+                        dpg.add_file_extension('.xlsx', color=(121, 237, 158), custom_text='[EXCEL]')
+
+                    dpg.add_menu_item(label='Import file', callback=lambda: dpg.show_item("upload_file_dia"))
                 with dpg.menu(label='Extra'):
                     dpg.add_menu_item(label='Help')
                     dpg.add_menu_item(label='Credits')
@@ -354,6 +493,9 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
                                 dpg.add_radio_button(items=['graph', 'diagram'], horizontal=True, callback=change_disp)
 
             with dpg.tab(label='Analyze'):
+                with dpg.file_dialog(directory_selector=False, show=False, callback=save_file_an, tag="file_dialog_tag", width=700,
+                                height=400):
+                    dpg.add_file_extension(".txt", color=(121, 237, 158))
                 with dpg.child_window(autosize_x=True, autosize_y=True, no_scrollbar=True, no_scroll_with_mouse=True,
                                       border=False):
                     with dpg.group(horizontal=True):
@@ -372,13 +514,94 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
                                 dpg.add_text(default_value='Minimum temperature: ', tag='an_mint')
                                 dpg.add_text(default_value='Maximum temperature: ', tag='an_maxt')
                                 dpg.add_text(default_value='Maximum wind velocity: ', tag='an_maxw')
-                                dpg.add_button(label='save to file', pos=[100, 290])
+                                dpg.add_button(label='save to file', pos=[100, 290], callback=lambda: dpg.show_item("file_dialog_tag"))
+
+                        with dpg.plot(width=640, height=525):
+                            dpg.add_plot_legend(label='presssure')
+                            dpg.add_plot_axis(dpg.mvXAxis, tag='x_pie')
+                            dpg.add_plot_axis(dpg.mvYAxis, tag="y_pie")
+                            dpg.add_pie_series(0., 0., 10., values=[], labels=[], parent='y_pie',
+                                               normalize=True, tag='an_pie')
 
             with dpg.tab(label='Forecasting'):
                 pass
 
             with dpg.tab(label='Monitoring'):
-                pass
+                with dpg.child_window(autosize_x=True, autosize_y=True, no_scrollbar=True, no_scroll_with_mouse=True,
+                                      border=False):
+                    with dpg.group(horizontal=True):
+                        with dpg.child_window(no_scrollbar=True, no_scroll_with_mouse=True,
+                                              border=True, width=320, height=80):
+                            with dpg.group(horizontal=True):
+                                dpg.add_text('Input place: ')
+                                dpg.add_input_text(width=200, height=50, tag='mtr_cnf')
+                            dpg.add_spacer(height=10)
+                            dpg.add_button(label='confirm', width=100, pos=[207, 50], callback=monitor_place)
+                        with dpg.tab_bar(tag='monitoring_tab'):
+                            with dpg.tab(label='Temperature'):
+                                with dpg.plot(width=640, height=500):
+                                    dpg.add_plot_legend(label='mn_temp')
+                                    dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='mn_xtemp')
+                                    dpg.add_plot_axis(dpg.mvYAxis, tag="mn_ytemp")
+                                    dpg.add_line_series([], [], tag='lsmn_temp', parent='mn_ytemp')
+                                    dpg.add_scatter_series([], [], tag='sctmn_temp', parent='mn_ytemp')
+                                    dpg.add_drag_line(label='cur_temp', tag='drag_temp', parent='mn_temp',
+                                                      color=(235, 153, 255), vertical=False, default_value=0, show=False)
+
+                            with dpg.tab(label='Wind'):
+                                with dpg.plot(width=640, height=500):
+                                    dpg.add_plot_legend(label='mn_wind')
+                                    dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='mn_xwind')
+                                    dpg.add_plot_axis(dpg.mvYAxis, label="wind velocity, m/s", tag="mn_ywind")
+                                    dpg.add_bar_series([], [], label='avg_velocity', tag='bmn_wind',
+                                                       parent='mn_ywind', weight=1)
+                                    dpg.add_bar_series([], [], label='max_velocity', tag='bmn_windmx',
+                                                       parent='mn_ywind', weight=0.5)
+
+                            with dpg.tab(label='Rainfall'):
+                                with dpg.plot(width=640, height=500):
+                                    dpg.add_plot_legend(label='mn_rfal')
+                                    dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='mn_xrfal')
+                                    dpg.add_plot_axis(dpg.mvYAxis, tag="mn_yrfal")
+                                    dpg.add_line_series([], [], tag='lsmn_rfal', parent='mn_yrfal')
+                                    dpg.add_scatter_series([], [], tag='sctmn_rfal', parent='mn_yrfal')
+
+                            with dpg.tab(label='Humidity'):
+                                with dpg.plot(width=640, height=500):
+                                    dpg.add_plot_legend(label='mn_hum')
+                                    dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='mn_xhum')
+                                    dpg.add_plot_axis(dpg.mvYAxis, tag="mn_yhum")
+                                    dpg.add_line_series([], [], tag='lsmn_hum', parent='mn_yhum')
+                                    dpg.add_scatter_series([], [], tag='sctmn_hum', parent='mn_yhum')
+
+                            with dpg.tab(label='Pressure'):
+                                with dpg.plot(width=640, height=500):
+                                    dpg.add_plot_legend(label='mn_pres')
+                                    dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='mn_xpres')
+                                    dpg.add_plot_axis(dpg.mvYAxis, tag="mn_ypres")
+                                    dpg.add_line_series([], [], tag='lsmn_pres', parent='mn_ypres')
+                                    dpg.add_scatter_series([], [], tag='sctmn_pres', parent='mn_ypres')
+
+                    with dpg.group(horizontal=True, pos=[0, 90]):
+                        with dpg.child_window(width=320, height=432, no_scroll_with_mouse=True, no_scrollbar=True):
+                            dpg.add_text(default_value='Info', pos=[320 // 2 - 20, 0])
+                            dpg.add_spacer(height=20)
+                            with dpg.group():
+                                dpg.add_text(default_value='Date: ', tag='mnt_date')
+                                dpg.add_text(default_value='Average temperature: ', tag='mnt_avtemp')
+                                dpg.add_text(default_value='Average wind velocity: ', tag='mnt_avwind')
+                                dpg.add_text(default_value='Average atm pressure: ', tag='mnt_avpr')
+                                dpg.add_text(default_value='Amount of rainfall: ', tag='mnt_rfal')
+                                dpg.add_text(default_value='Average humidity value: ', tag='mnt_hum')
+                                dpg.add_text(default_value='Minimum temperature: ', tag='mnt_mint')
+                                dpg.add_text(default_value='Maximum temperature: ', tag='mnt_maxt')
+                                dpg.add_text(default_value='Maximum wind velocity: ', tag='mnt_maxw')
+                                dpg.add_text(default_value='---------------------------------------------')
+                                dpg.add_text(default_value='Current temperature: ', tag='mntc_temp')
+                                dpg.add_text(default_value='Current wind velocity: ', tag='mntc_wind')
+                                dpg.add_text(default_value='Current humidity: ', tag='mntc_hum')
+                                dpg.add_text(default_value='Current pressure: ', tag='mntc_pr')
+                                dpg.add_text(default_value='Current condition: ', tag='mntc_cnd')
 
 def work_window_start():
     dpg.set_viewport_height(ww_height)
