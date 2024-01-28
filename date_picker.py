@@ -1,4 +1,3 @@
-# Credit @Tensor - https://discord.com/channels/736279277242417272/1083377856064798781/1086329311532953652
 import threading
 import traceback
 from datetime import datetime, timedelta
