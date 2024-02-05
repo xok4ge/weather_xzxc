@@ -58,6 +58,12 @@ def monitor_place(sender, app_data):
         dpg.set_value('mntc_pr', dpg.get_value('mntc_pr') + str(curjson['pressure_mm']) + ' mmHg')
         dpg.set_value('mntc_cnd', dpg.get_value('mntc_cnd') + str(curjson['condition']))
 
+        if str(curjson['condition']) in ['heavy-rain', 'snow-showers', 'hail', 'thunderstorm'
+                                         'thunderstorm-with-rain', 'thunderstorm-with-hail',
+                                         'showers', 'wet-snow', 'snow']:
+            dpg.set_value('war_txt', f'Attention! There is {str(curjson["condition"])} right now')
+            dpg.configure_item('warning', show=True)
+
         mn_axis_fit()
 
         dpg.set_value('lsmn_temp', [period, temp])
@@ -78,6 +84,7 @@ def monitor_place(sender, app_data):
         dpg.set_value('drag_temp', curjson['temp'])
         dpg.configure_item('drag_temp', show=True)
     except Exception as e:
+        print(e)
         dpg.configure_item('er_city', show=True)
 def save_file_an(sender, app_data):
     an_flnms = ['an_ind', 'an_date', 'an_avtemp', 'an_avwind', 'an_avpr', 'an_rfal', 'an_hum', 'an_cc', 'an_mint',
@@ -630,7 +637,7 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
                                 dpg.add_line_series([], [], tag='predfr_temp', parent='fr_ytemp', label='predict')
 
                         with dpg.tab(label='Wind'):
-                            with dpg.plot(width=640, height=500):
+                            with dpg.plot(width=970, height=500):
                                 dpg.add_plot_legend(label='mn_wind')
                                 dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='fr_xwind')
                                 dpg.add_plot_axis(dpg.mvYAxis, label="wind velocity, m/s", tag="fr_ywind")
@@ -640,7 +647,7 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
                                 dpg.add_line_series([], [], tag='predfr_wind', parent='fr_ywind', label='predict')
 
                         with dpg.tab(label='Rainfall'):
-                            with dpg.plot(width=640, height=500):
+                            with dpg.plot(width=970, height=500):
                                 dpg.add_plot_legend(label='fr_rfal')
                                 dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='fr_xrfal')
                                 dpg.add_plot_axis(dpg.mvYAxis, tag="fr_yrfal", label='precipitation total, mm')
@@ -649,7 +656,7 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
                                 dpg.add_line_series([], [], tag='predfr_rfal', parent='fr_yrfal', label='predict')
 
                         with dpg.tab(label='Humidity'):
-                            with dpg.plot(width=640, height=500):
+                            with dpg.plot(width=970, height=500):
                                 dpg.add_plot_legend(label='fr_hum')
                                 dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='fr_xhum')
                                 dpg.add_plot_axis(dpg.mvYAxis, tag="fr_yhum", label='relative humidity, %')
@@ -659,7 +666,7 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
 
 
                         with dpg.tab(label='Pressure'):
-                            with dpg.plot(width=640, height=500):
+                            with dpg.plot(width=970, height=500):
                                 dpg.add_plot_legend(label='mn_pres')
                                 dpg.add_plot_axis(dpg.mvXAxis, label="period, 3hr", tag='fr_xpres')
                                 dpg.add_plot_axis(dpg.mvYAxis, tag="fr_ypres", label='atmosphere pressure, mmHg')
@@ -670,6 +677,11 @@ with dpg.window(tag='work_window', no_scrollbar=True, label='ffgm', no_resize=Tr
                 with dpg.child_window(autosize_x=True, autosize_y=True, no_scrollbar=True, no_scroll_with_mouse=True,
                                       border=False):
                     with dpg.group(horizontal=True):
+
+                        with dpg.popup(parent=dpg.last_item(), modal=True, tag='warning', max_size=[600, 20]):
+                            dpg.configure_item(dpg.last_item(), pos=[400, 200])
+                            dpg.add_text(tag='war_txt', default_value='qwe')
+
                         with dpg.child_window(no_scrollbar=True, no_scroll_with_mouse=True,
                                               border=True, width=320, height=80):
                             with dpg.group(horizontal=True):
