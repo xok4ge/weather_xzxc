@@ -15,24 +15,7 @@ def upload_file_fi(file_path, app_data):
     if ext == 'csv':
         root = pth.cwd().joinpath(f'data/data4/{filename}')
         src_file.rename(root)
-    # elif ext == 'xlsx': надо допилить. как че это сделать хз разбираться уже времени нет, по сути быстро конвертируем в csv и уже его считываем
-    #     df = pd.read_excel(src_file)
-    #     print(df.head())
-    #     df.to_csv(pth.cwd().joinpath(f'data/data4/{app_data[0]}.csv'))
-
-
-
-
-
-    # with open(f'data/data4/{f[:-4]}.csv', mode='a', encoding='utf-8') as cs:
-    #     writer = csv.writer(cs)
-    #     writer.writerow(head)
-    #     for y in range(table.shape[0]):
-    #         zxc = str(table.iloc[y])[5:]
-    #         new = []
-    #         st = 0
-    #         for el in k:
-    #             new.append(zxc[st:st + el].strip())
-    #             st += el + 1
-    #         writer.writerow(new)
-    # print(timer() - start)
+    elif ext == 'xlsx':
+        df = pd.read_excel(src_file)
+        print(df.head())
+        df.to_csv(pth.cwd().joinpath(f'data/data4/{app_data[0]}.csv'))

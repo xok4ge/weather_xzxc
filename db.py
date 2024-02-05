@@ -46,3 +46,12 @@ def get_station_db(sin_indx, conn):
         ans = cur.fetchone()
         if ans is not None:
             return list(ans)
+
+
+def get_station_predict(sin_indx, conn):
+    with conn.cursor() as cur:
+        cur.execute(f"""select latitude, longitude, altitude from stations
+                            where synoptic_index=%s""", (sin_indx,))
+        ans = cur.fetchone()
+        if ans is not None:
+            return list(ans)
