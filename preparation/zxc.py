@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from db import *
 
-conn = db_session()
+conn = sqlite3.connect('../database/weatherDB.db')
 cur = conn.cursor()
 with open('meteo.html', mode='r', encoding='UTF-8') as file:
     text = file.read()
@@ -17,5 +17,7 @@ for tb in zxc.find_all('tr')[1:]:
     long = str(long).replace(',', '.')
     alt = str(alt).replace(',', '.')
     cur.execute('''insert into stations(synoptic_index, name, latitude, longitude, altitude, country)
-                    values (%s, %s, %s, %s, %s, %s)''', (int(si), name, float(lat), float(long), alt, country))
+                    values (?, ?, ?, ?, ?, ?)''', (int(si), name, float(lat), float(long), alt, country))
+    conn.commit()
+conn.close()
 print('done')

@@ -149,11 +149,11 @@ def make_prediction(data, model='XGBoost'):
     # data format: Y; m; d; hour; latitude; longitude; altitude above sea level
     # output: tempreture percipitation wind humidity pressure
     if model == 'XGBoost':
-        Xg_reg_temp = joblib.load('sklearn_models/xg_regressor_temp.pkl')
-        Xg_reg_per = joblib.load('sklearn_models/xg_regressor_per.pkl')
-        Xg_reg_wind = joblib.load('sklearn_models/xg_regressor_wind.pkl')
-        Xg_reg_hum = joblib.load('sklearn_models/xg_regressor_hum.pkl')
-        Xg_reg_press = joblib.load('sklearn_models/xg_regressor_press.pkl')
+        Xg_reg_temp = joblib.load('../sklearn_models/xg_regressor_temp.pkl')
+        Xg_reg_per = joblib.load('../sklearn_models/xg_regressor_per.pkl')
+        Xg_reg_wind = joblib.load('../sklearn_models/xg_regressor_wind.pkl')
+        Xg_reg_hum = joblib.load('../sklearn_models/xg_regressor_hum.pkl')
+        Xg_reg_press = joblib.load('../sklearn_models/xg_regressor_press.pkl')
 
         pred.append(Xg_reg_temp.predict(data))
         pred.append(Xg_reg_per.predict(data))

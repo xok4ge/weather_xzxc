@@ -1,17 +1,15 @@
 import dearpygui.dearpygui as dpg
 import ctypes
-import sys
 import math
-from api import *
-from receive import *
+from func.api import *
+from func.receive import *
 from datetime import datetime
-from get_data import *
-from pathlib import Path as pth
-from date_picker import DatePicker
+from func.get_data import *
+from func.date_picker import DatePicker
 from db import *
-from config import *
-from file_import import *
-from predict import make_day_prediction
+from func.config import *
+from func.file_import import *
+from func.predict import make_day_prediction
 
 
 conn = db_session()
@@ -60,7 +58,7 @@ def monitor_place(sender, app_data):
 
         if str(curjson['condition']) in ['heavy-rain', 'snow-showers', 'hail', 'thunderstorm'
                                          'thunderstorm-with-rain', 'thunderstorm-with-hail',
-                                         'showers', 'wet-snow', 'snow']:
+                                         'showers', 'wet-snow', 'snow', 'rain']:
             dpg.set_value('war_txt', f'Attention! There is {str(curjson["condition"])} right now')
             dpg.configure_item('warning', show=True)
 

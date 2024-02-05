@@ -1,11 +1,7 @@
 import datetime as dt
-import sys
 import pandas as pd
-import numpy as np
 from pathlib import Path as pth
 from timeit import default_timer as timer
-from db import *
-
 
 head = ['Синоптический индекс станции', 'Год по Гринвичу', 'Месяц по Гринвичу',
         'День по Гринвичу', 'Срок по Гринвичу', 'Общее количество облачности', 'Погода между сроками',
@@ -19,7 +15,7 @@ pd.set_option('display.max_columns', None)
 
 def get_data_clbk(filename, date=False):
     start = timer()
-    path = pth.cwd().joinpath('data')
+    path = pth.cwd().joinpath('../data')
     for dir in path.iterdir():
         if dir.is_dir():
             if f'{filename}.csv' in [x.name for x in dir.iterdir()]:
