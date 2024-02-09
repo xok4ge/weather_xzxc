@@ -21,6 +21,7 @@ git clone https://github.com/xok4ge/weather_xzxc.git
 ### Установка с менеджером [Poetry](https://python-poetry.org/)
 
 [Установка менеджера](https://habr.com/ru/articles/740376/)
+
 При открытии проекта в среде разработки (к примеру PyCharm) автоматически будет предложено установить все зависимости
 
 ### Установка через pip+venv
