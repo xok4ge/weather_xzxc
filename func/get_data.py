@@ -15,7 +15,7 @@ pd.set_option('display.max_columns', None)
 
 def get_data_clbk(filename, date=False):
     start = timer()
-    path = pth.cwd().joinpath('../data')
+    path = pth.cwd().joinpath('data')
     for dir in path.iterdir():
         if dir.is_dir():
             if f'{filename}.csv' in [x.name for x in dir.iterdir()]:
