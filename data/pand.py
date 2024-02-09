@@ -24,7 +24,7 @@ for f in files:
     df = path+f'\\{f}'
     table = pd.read_csv(df, header=None)
     start = timer()
-    with open(f'data1/{f[:-4]}.csv', mode='a', encoding='utf-8') as cs:
+    with open(f'data1/{f[:-4]}.csv', mode='a', encoding='utf-8') as cs:  # в качестве названия заменять data1 на произвольное собственное название, повторяться не должны
         writer = csv.writer(cs)
         writer.writerow(head)
         for y in range(table.shape[0]):
